@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { useState, useEffect } from "react";
 import { ToastContainer } from "react-toastify"; // toast
 import "react-toastify/dist/ReactToastify.css";
 import "./App.css";
@@ -15,207 +15,92 @@ import Modal from "./Modal";
 
 import fetchPicture from "../services/fetchApi";
 
-class App extends Component {
-  // видео Репеты пересмотреть начиная с 1:53:00 !!!!!!!!!!!!!!!!!!!!!!!!
-  state = {
-    query: "",
-    page: 1,
-    images: [],
-    error: "",
-    largeImageURL: "",
-    tags: "",
-    showModal: false,
-    isLoading: false,
-  };
+const App = () => {
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [images, setImages] = useState([]);
+  const [largeImageURL, setLargeImageURL] = useState("");
+  const [tags, setTags] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  // const [error, setError] = useState("");
 
-  componentDidUpdate(prevProps, prevState) {
-    const prevQuery = prevState.query;
-    const nextQuery = this.state.query;
-
-    if (prevQuery !== nextQuery) {
-      this.getPictureFetch();
+  useEffect(() => {
+    if (!query) {
+      return;
     }
+    getPictureFetch();
+  }, [query]);
 
-    if (this.state.page !== 1 && prevState.page !== this.state.page) {
-      this.scroll();
-    }
-  }
-
-  getPictureFetch = () => {
-    const { query, page } = this.state;
-    this.setState({ isLoading: true });
+  const getPictureFetch = () => {
+    setIsLoading(true);
 
     fetchPicture({ query, page })
       .then((images) => {
-        this.setState((prevState) => ({
-          images: [...prevState.images, ...images],
-          page: prevState.page + 1,
-        }));
+        setImages((prevImages) => [...prevImages, ...images]);
+        setPage((prevPage) => prevPage + 1);
+        if (page !== 1) {
+          scroll();
+        }
       })
       .catch((error) => console.log(error))
-      .finally(() => this.setState({ isLoading: false }));
+      .finally(() => setIsLoading(false));
   };
 
-  handleFormSubmit = (query) => {
-    this.setState({ query, page: 1, images: [] });
+  const handleFormSubmit = (query) => {
+    setQuery(query);
+    setPage(1);
+    setImages([]);
   };
 
-  scroll = () => {
+  const scroll = () => {
     window.scrollTo({
       top: document.documentElement.scrollHeight,
       behavior: "smooth",
     });
   };
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+  const toggleModal = () => {
+    setShowModal(!showModal);
   };
 
-  openModalImage = ({ largeImageURL, tags }) => {
-    this.setState({ largeImageURL, tags });
-    this.toggleModal();
+  const openModalImage = ({ largeImageURL, tags }) => {
+    setLargeImageURL(largeImageURL);
+    setTags(tags);
+    toggleModal();
   };
 
-  onLoadMore = () => {
-    this.getPictureFetch();
+  const onLoadMore = () => {
+    getPictureFetch();
   };
 
-  render() {
-    const { page, images, showModal, largeImageURL, tags, isLoading } =
-      this.state;
-    const showLoadMore = page !== 1 && images.length > 0 && images.length >= 12;
+  const showLoadMore = page !== 1 && images.length > 0 && images.length >= 12;
 
-    return (
-      <div className="Wrapper">
-        <Searchbar onSubmit={this.handleFormSubmit} />
-        <ImageGallery images={images} openModalImage={this.openModalImage} />
+  return (
+    <div className="Wrapper">
+      <Searchbar onSubmit={handleFormSubmit} />
+      <ImageGallery images={images} openModalImage={openModalImage} />
 
-        {isLoading && (
-          <Loader
-            type="ThreeDots" // Hearts
-            color="#00BFFF"
-            height={100}
-            width={100}
-            timeout={3000}
-          />
-        )}
+      {isLoading && (
+        <Loader
+          type="ThreeDots" // Hearts
+          color="#00BFFF"
+          height={100}
+          width={100}
+          timeout={3000}
+        />
+      )}
 
-        {showModal && (
-          <Modal onClose={this.toggleModal}>
-            <img src={largeImageURL} alt={tags} />
-          </Modal>
-        )}
+      {showModal && (
+        <Modal onClose={toggleModal}>
+          <img src={largeImageURL} alt={tags} />
+        </Modal>
+      )}
 
-        {showLoadMore && <Button onLoadMore={this.onLoadMore} />}
-        <ToastContainer autoClose={3000} />
-      </div>
-    );
-  }
-}
+      {showLoadMore && <Button onLoadMore={onLoadMore} />}
+      <ToastContainer autoClose={3000} />
+    </div>
+  );
+};
 
 export default App;
-
-// =========================
-// class App extends Component {
-//   // видео Репеты пересмотреть начиная с 1:53:00 !!!!!!!!!!!!!!!!!!!!!!!!
-//   state = {
-//     query: "",
-//     page: 1,
-//     images: [],
-//     error: "",
-//     largeImageURL: "",
-//     tags: "",
-//     showModal: false,
-//     isLoading: false,
-//   };
-
-//   componentDidUpdate(prevProps, prevState) {
-//     const prevQuery = prevState.query;
-//     const nextQuery = this.state.query;
-
-//     if (prevQuery !== nextQuery) {
-//       this.getPictureFetch();
-//     }
-
-//     if (this.state.page !== 1 && prevState.page !== this.state.page) {
-//       this.scroll();
-//     }
-//   }
-
-//   getPictureFetch = () => {
-//     const { query, page } = this.state;
-//     this.setState({ isLoading: true });
-
-//     fetchPicture({ query, page })
-//       .then((images) => {
-//         this.setState((prevState) => ({
-//           images: [...prevState.images, ...images],
-//           page: prevState.page + 1,
-//         }));
-//       })
-//       .catch((error) => console.log(error))
-//       .finally(() => this.setState({ isLoading: false }));
-//   };
-
-//   handleFormSubmit = (query) => {
-//     this.setState({ query, page: 1, images: [] });
-//   };
-
-//   scroll = () => {
-//     window.scrollTo({
-//       top: document.documentElement.scrollHeight,
-//       behavior: "smooth",
-//     });
-//   };
-
-//   toggleModal = () => {
-//     this.setState(({ showModal }) => ({
-//       showModal: !showModal,
-//     }));
-//   };
-
-//   openModalImage = ({ largeImageURL, tags }) => {
-//     this.setState({ largeImageURL, tags });
-//     this.toggleModal();
-//   };
-
-//   onLoadMore = () => {
-//     this.getPictureFetch();
-//   };
-
-//   render() {
-//     const { page, images, showModal, largeImageURL, tags, isLoading } =
-//       this.state;
-//     const showLoadMore = page !== 1 && images.length > 0 && images.length >= 12;
-
-//     return (
-//       <div className="Wrapper">
-//         <Searchbar onSubmit={this.handleFormSubmit} />
-//         <ImageGallery images={images} openModalImage={this.openModalImage} />
-
-//         {isLoading && (
-//           <Loader
-//             type="ThreeDots" // Hearts
-//             color="#00BFFF"
-//             height={100}
-//             width={100}
-//             timeout={3000}
-//           />
-//         )}
-
-//         {showModal && (
-//           <Modal onClose={this.toggleModal}>
-//             <img src={largeImageURL} alt={tags} />
-//           </Modal>
-//         )}
-
-//         {showLoadMore && <Button onLoadMore={this.onLoadMore} />}
-//         <ToastContainer autoClose={3000} />
-//       </div>
-//     );
-//   }
-// }
-
-// export default App;
